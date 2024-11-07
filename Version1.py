@@ -2,7 +2,9 @@ import requests
 import json
 from bs4 import BeautifulSoup
 import threading
+import re
 
+# First part of the project: API
 root_url='https://country-leaders.onrender.com/status'
 req=requests.get(root_url)
 
@@ -42,8 +44,22 @@ parameters={'country':'us'}
 leaders=requests.get(leaders_url, cookies=cookie, params=parameters)
 leaders.json()
 
-leaders_per_country = {}
-def get_leaders():
+
+
+# Second part of the project: Scraping with BeautifulSoup
+# Fetch and parsing
+url_1 = 'https://en.wikipedia.org/wiki/George_Washington'
+page = requests.get(url_1)
+soup = BeautifulSoup(page.content, features='html.parser')
+soup.prettify()
+
+paragraph_1 = soup.find_all('p')
+# print(paragraph_1[1].text)
+# George Washington (February 22, 1732 – December 14, 1799) was a Founding Father of the United States, military officer, and farmer who served as the first president of the United States from 1789 to 1797. Appointed by the Second Continental Congress as commander of the Continental Army in 1775, Washington led Patriot forces to victory in the American Revolutionary War and then served as president of the Constitutional Convention in 1787, which drafted the current Constitution of the United States. Washington has thus become commonly known as the "Father of his Country".
+
+
+leaders_per_country = {}      # The dictionary leaders_per_country, thanks to the function get_leaders(), will contain the keys 'us', 'be', 'ma', 'ru', 'fr'
+def get_leaders():            # and for each key we will have the presidents with their characteristics
     url='https://country-leaders.onrender.com/leaders'
     liste=['us', 'be', 'ma', 'ru', 'fr']
     for i in liste:
@@ -53,7 +69,7 @@ def get_leaders():
     return leaders_per_country
 leaders_per_country=get_leaders()
 
-print(leaders_per_country)
+# print(leaders_per_country)
 
 #Fetch and persing
 url_1='https://en.wikipedia.org/wiki/George_Washington'
@@ -71,21 +87,24 @@ def get_first_paragraph(wikipedia_url:str)->str:
     # print(wikipedia_url) # keep this for the rest of the notebook
     with lock:
             page=requests.get(wikipedia_url)
-            soup=BeautifulSoup(page.content, features='html.parser')
-            page.encoding = 'utf-8'  
-            # table = soup.find("div", id="mw-content-text").find("div", class_="mw-content-ltr mw-parser-output").find("table")
-            # first_paragraph= table.find_next("p")
+            soup=BeautifulSoup(page.content, features='html.parser')    # This function returns the first paragraph for 
+            page.encoding = 'utf-8'                                     # each Wikipedia link 
             table = soup.find('table')
             first_paragraph = table.find_next('p')
-            print(first_paragraph.text)
-    return first_paragraph.text
+            if first_paragraph:
+                cleaned_paragraph=re.sub(r'[+\*\?\^\$\(\)\[\]\{\}\|\\]', " ", first_paragraph.text)
+                print(cleaned_paragraph)
+            else:
+                print("No paragraph")
+            
 
 
-wikipedia_links=[]
+wikipedia_links=[]                                           # Here I am saving all the Wikipedia links
 for country in leaders_per_country.keys():
     for president in leaders_per_country[country]:
         wikipedia_links.append(president['wikipedia_url'])
 
+print(wikipedia_links)
 
 threads = []
 for link in wikipedia_links:
@@ -96,3 +115,23 @@ for link in wikipedia_links:
 
 for thread in threads:
     thread.join()
+
+
+def get_leaders_with_paragraphs(wikipedia_links: list):        # I created a new function that will return the
+    leaders_per_country_update = {}                            # first paragraph of the first link in a dictionary
+    for president_link in wikipedia_links:                     
+
+        first_paragraph = get_first_paragraph(president_link)
+
+        if first_paragraph:
+            leaders_per_country_update[president_link] = first_paragraph
+        else:
+            print(f"Empty paragraph for URL: {president_link}")
+    
+    return leaders_per_country_update
+
+# Run the function and print the results
+leaders_with_paragraphs = get_leaders_with_paragraphs(wikipedia_links)
+# print(leaders_with_paragraphs)
+
+
