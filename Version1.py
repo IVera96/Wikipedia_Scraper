@@ -119,7 +119,7 @@ for thread in threads:
 
 
 def get_leaders_with_paragraphs(wikipedia_links: list):        # I created a new function that will return the
-    leaders_per_country_update = {}                            # first paragraph of the first link in a dictionary
+    leaders_per_country_update = {}                            # first paragraph of the each link, saved in a dictionary
     for president_link in wikipedia_links:                     
 
         first_paragraph = get_first_paragraph(president_link)
