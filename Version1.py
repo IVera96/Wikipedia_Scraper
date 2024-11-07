@@ -91,11 +91,12 @@ def get_first_paragraph(wikipedia_url:str)->str:
             page.encoding = 'utf-8'                                     # each Wikipedia link 
             table = soup.find('table')
             first_paragraph = table.find_next('p')
+            cleaned_paragraph=''
             if first_paragraph:
                 cleaned_paragraph=re.sub(r'[+\*\?\^\$\(\)\[\]\{\}\|\\]', " ", first_paragraph.text)
                 print(cleaned_paragraph)
-            else:
-                print("No paragraph")
+            return cleaned_paragraph
+            
             
 
 
@@ -104,7 +105,7 @@ for country in leaders_per_country.keys():
     for president in leaders_per_country[country]:
         wikipedia_links.append(president['wikipedia_url'])
 
-print(wikipedia_links)
+# print(wikipedia_links)
 
 threads = []
 for link in wikipedia_links:
@@ -123,15 +124,21 @@ def get_leaders_with_paragraphs(wikipedia_links: list):        # I created a new
 
         first_paragraph = get_first_paragraph(president_link)
 
-        if first_paragraph:
-            leaders_per_country_update[president_link] = first_paragraph
-        else:
-            print(f"Empty paragraph for URL: {president_link}")
+        leaders_per_country_update[president_link] = first_paragraph
+        
     
     return leaders_per_country_update
 
-# Run the function and print the results
+
 leaders_with_paragraphs = get_leaders_with_paragraphs(wikipedia_links)
 # print(leaders_with_paragraphs)
+
+def save(data, filename='leaders.json'):
+    with open(filename, 'w') as json_file:
+        print(data)
+        json.dump(data, json_file, indent=4)
+    print(f"Data successfully saved to {filename}")
+
+save(leaders_with_paragraphs)
 
 
